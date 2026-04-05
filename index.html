@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumina Business Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --opay-blue: #001f54;
+            --bg-light: #f4f7f6;
+            --success: #28a745;
+            --danger: #d32f2f;
+            --text-sub: #8a9fc4;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #e0e0e0;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        .phone-container {
+            width: 100%;
+            max-width: 420px;
+            background: white;
+            min-height: 100vh;
+            position: relative;
+            box-shadow: 0 0 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        /* --- GLOBAL CLASSES --- */
+        .screen { display: none; padding-bottom: 90px; min-height: 100vh; box-sizing: border-box; overflow-y: auto; }
+        .active-screen { display: block; }
+        .btn-primary { background: var(--opay-blue); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; font-size: 1rem; margin-top: 10px; transition: opacity 0.2s; }
+        .btn-primary:active { opacity: 0.8; }
+        .btn-outline { background: transparent; color: var(--opay-blue); border: 2px solid var(--opay-blue); }
+        input, select { width: 100%; padding: 15px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 1rem; outline: none; }
+
+        /* --- AUTH SCREENS --- */
+        .auth-screen { text-align: center; padding: 40px 30px; }
+        .logo-big { font-size: 3.5rem; font-weight: 900; color: var(--opay-blue); margin-bottom: 5px; }
+
+        /* --- DASHBOARD --- */
+        .top-nav { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .user-pill { display: flex; align-items: center; background: #f2f2f2; padding: 6px 15px; border-radius: 25px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+        .user-pill img { width: 28px; height: 28px; border-radius: 50%; margin-right: 8px; object-fit: cover; background: #ddd; }
+        
+        .kyc-alert { background: #fff5eb; color: #d46b08; padding: 12px 20px; font-size: 0.75rem; border-top: 1px solid #ffe7ba; border-bottom: 1px solid #ffe7ba; margin-bottom: 15px; }
+
+        .balance-card { background: var(--opay-blue); margin: 0 20px 25px; border-radius: 16px; padding: 22px; color: white; box-shadow: 0 8px 16px rgba(0,31,84,0.3); }
+        .card-acc-info { font-size: 0.8rem; display: flex; justify-content: space-between; margin-bottom: 10px; opacity: 0.8; }
+        .card-balance { font-size: 2.2rem; font-weight: bold; display: flex; align-items: center; gap: 10px; }
+        .card-actions { display: flex; gap: 12px; margin-top: 20px; }
+        .btn-card { background: rgba(255,255,255,0.15); border: none; color: white; padding: 10px 18px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; cursor: pointer; flex: 1; text-align: center; }
+
+        .services-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; padding: 0 20px; margin-bottom: 20px; }
+        .service-item { text-align: center; cursor: pointer; }
+        .service-icon { background: #f9f9f9; width: 55px; height: 55px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-size: 1.3rem; color: #444; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .service-item span { font-size: 0.7rem; color: #555; font-weight: 600; display: block; }
+
+        /* --- HEADERS --- */
+        .header-blue { background: var(--opay-blue); color: white; padding: 15px 20px; display: flex; align-items: center; position: sticky; top: 0; z-index: 50; }
+        .transfer-body { padding: 20px; }
+
+        /* --- HISTORY --- */
+        .history-list { padding: 0; }
+        .month-header { background: #f8f9fa; padding: 12px 20px; font-size: 0.75rem; font-weight: 800; color: #888; border-bottom: 1px solid #eee; position: sticky; top: 50px; z-index: 10; }
+        .tx-row { display: flex; justify-content: space-between; padding: 18px 20px; border-bottom: 1px solid #f9f9f9; background: white; }
+
+        /* --- BOTTOM NAV --- */
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 420px; background: white; border-top: 1px solid #eee; display: none; justify-content: space-around; padding: 12px 0 20px; z-index: 1000; left: 50%; transform: translateX(-50%); }
+        .nav-link { text-align: center; color: #bbb; text-decoration: none; font-size: 0.65rem; font-weight: bold; }
+        .nav-link.active { color: var(--opay-blue); }
+        .nav-link i { font-size: 1.3rem; display: block; margin-bottom: 5px; }
+    </style>
+</head>
+<body onload="initApp()">
+
+<div class="phone-container">
+
+    <div id="login" class="screen auth-screen active-screen">
+        <div class="logo-big">Lumina</div>
+        <p style="color:#666">Secure Access</p>
+        <div style="margin-top: 30px; text-align: left;">
+            <label style="font-size:0.75rem; margin-left:5px; font-weight:bold;">USERNAME</label>
+            <input type="text" id="l-user" placeholder="Enter username">
+            <label style="font-size:0.75rem; margin-left:5px; font-weight:bold;">PASSWORD</label>
+            <input type="password" id="l-pass" placeholder="Enter password">
+            <label style="font-size:0.75rem; margin-left:5px; font-weight:bold;">ACCESS PIN</label>
+            <input type="password" id="l-pin" placeholder="4-Digit PIN" maxlength="4">
+            <button class="btn-primary" onclick="handleLogin()">Sign In</button>
+            <button class="btn-primary btn-outline" onclick="navTo('register')">Create Account</button>
+        </div>
+    </div>
+
+    <div id="register" class="screen auth-screen">
+        <div class="logo-big" style="font-size: 2.5rem;">Lumina</div>
+        <p style="color:#666">Permanent Registration</p>
+        <div style="margin-top: 20px; text-align: left;">
+            <label style="font-size:0.75rem; margin-left:5px; font-weight:bold;">FULL PROFILE NAME</label>
+            <input type="text" id="r-fullname" placeholder="Full Name">
+            <label style="font-size:0.75rem; margin-left:5px; font-weight:bold;">SECRET USERNAME</label>
+            <input type="text" id="r-user" placeholder="Username">
+            <label style="font-size:0.75rem; margin-left:5px; font-weight:bold;">SET PASSWORD</label>
+            <input type="password" id="r-pass" placeholder="Password">
+            <label style="font-size:0.75rem; margin-left:5px; font-weight:bold;">SET 4-DIGIT PIN</label>
+            <input type="password" id="r-pin" placeholder="PIN" maxlength="4">
+            <button class="btn-primary" onclick="handleRegister()">Save Permanently</button>
+            <button class="btn-primary btn-outline" onclick="navTo('login')">Back</button>
+        </div>
+    </div>
+
+    <div id="dash" class="screen">
+        <div class="top-nav">
+            <div class="user-pill" onclick="navTo('settings')">
+                <img class="sync-pfp" src="https://ui-avatars.com/api/?name=User" alt="pfp">
+                <span id="dash-username">Username</span>
+            </div>
+            <div><i class="fa-solid fa-headset" style="margin-right: 15px; color:#555;"></i><i class="fa-regular fa-bell"></i></div>
+        </div>
+        <div class="kyc-alert"><i class="fa-solid fa-circle-exclamation"></i> &nbsp; KYC Verification in progress.</div>
+        
+        <div class="balance-card">
+            <div class="card-acc-info"><span>7068434066 | <span id="dash-fullname">Full Name</span></span><i class="fa-regular fa-copy"></i></div>
+            <div class="card-balance">₦161,096.27 <i class="fa-regular fa-eye-slash" style="font-size: 1rem; opacity: 0.6;"></i></div>
+            <div class="card-actions">
+                <button class="btn-card" onclick="navTo('transfer')"><i class="fa-solid fa-paper-plane"></i> Send</button>
+                <button class="btn-card" onclick="navTo('history')"><i class="fa-solid fa-clock-rotate-left"></i> History</button>
+            </div>
+        </div>
+
+        <div class="services-grid">
+            <div class="service-item" onclick="navTo('transfer')"><div class="service-icon" style="color: #0056ff;"><i class="fa-solid fa-right-left"></i></div><span>Transfer</span></div>
+            <div class="service-item"><div class="service-icon"><i class="fa-solid fa-phone"></i></div><span>Airtime</span></div>
+            <div class="service-item"><div class="service-icon"><i class="fa-solid fa-globe"></i></div><span>Data</span></div>
+            <div class="service-item"><div class="service-icon"><i class="fa-solid fa-futbol"></i></div><span>Betting</span></div>
+            <div class="service-item" onclick="navTo('history')"><div class="service-icon"><i class="fa-solid fa-file-invoice"></i></div><span>Statement</span></div>
+            <div class="service-item"><div class="service-icon"><i class="fa-solid fa-piggy-bank"></i></div><span>Savings</span></div>
+            <div class="service-item"><div class="service-icon"><i class="fa-solid fa-graduation-cap"></i></div><span>Education</span></div>
+            <div class="service-item"><div class="service-icon"><i class="fa-solid fa-table-cells"></i></div><span>More</span></div>
+        </div>
+    </div>
+
+    <div id="transfer" class="screen">
+        <div class="header-blue">
+            <i class="fa-solid fa-arrow-left" onclick="navTo('dash')" style="cursor:pointer; font-size: 1.2rem;"></i>
+            <span style="margin-left: 20px; font-weight: bold;">New Transfer</span>
+        </div>
+        <div class="transfer-body">
+            <select><option>Select Bank</option><option>First Bank</option><option>Zenith Bank</option><option>Opay</option></select>
+            <input type="text" placeholder="Account Number">
+            <input type="text" placeholder="₦ 0.00">
+            <button class="btn-primary" onclick="confirmTransfer()">Send Now</button>
+        </div>
+    </div>
+
+    <div id="history" class="screen">
+        <div class="header-blue" style="background:white; color:var(--opay-blue); border-bottom:1px solid #eee;">
+            <i class="fa-solid fa-arrow-left" onclick="navTo('dash')" style="cursor:pointer;"></i>
+            <span style="margin-left: 20px; font-weight: bold;">Activity History</span>
+        </div>
+        <div class="history-list">
+            <div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	 <div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	 <div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	 <div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	 <div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	 <div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	 <div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	 <div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	 <div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	 <div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	 <div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	 <div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	 <div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	 <div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	 <div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	 <div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	 <div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+	<div class="month-header">JANUARY 2023</div>
+            <div class="tx-row"><div><b>Transfer to Friend</b><br><small>Jan 28</small></div><div style="color:var(--danger); font-weight:bold;">-$12,500.00</div></div>
+            <div class="tx-row"><div><b>Salary Credit</b><br><small>Jan 01</small></div><div style="color:var(--success); font-weight:bold;">+$150,000.00</div></div>
+
+
+        </div>
+    </div>
+
+    <div id="settings" class="screen">
+        <div style="background:var(--opay-blue); color:white; padding:50px 20px; text-align:center;">
+            <img class="sync-pfp" src="https://ui-avatars.com/api/?name=User" style="width:110px; height:110px; border-radius:50%; border:4px solid white; object-fit:cover;">
+            <h2 id="settings-fullname" style="margin:10px 0 0;">Profile Name</h2>
+            <p id="settings-username" style="margin:5px 0 15px; opacity:0.7;">@username</p>
+            <button onclick="document.getElementById('pfp-input').click()" style="background:rgba(255,255,255,0.2); border:none; color:white; padding:8px 20px; border-radius:20px; cursor:pointer;">Update Photo</button>
+            <input type="file" id="pfp-input" style="display:none" accept="image/*" onchange="savePfp(this)">
+        </div>
+        <div style="padding: 20px;">
+            <button class="btn-primary" onclick="logout()" style="background:var(--danger);">Log Out</button>
+        </div>
+    </div>
+
+    <div class="bottom-nav" id="main-nav">
+        <a href="#" class="nav-link" onclick="navTo('dash')"><i class="fa-solid fa-house"></i>Home</a>
+        <a href="#" class="nav-link" onclick="navTo('transfer')"><i class="fa-solid fa-paper-plane"></i>Send</a>
+        <a href="#" class="nav-link" onclick="navTo('history')"><i class="fa-solid fa-clock-rotate-left"></i>History</a>
+        <a href="#" class="nav-link" onclick="navTo('settings')"><i class="fa-solid fa-user"></i>Profile</a>
+    </div>
+
+</div>
+
+<script>
+    function initApp() {
+        const sPfp = localStorage.getItem('user_pfp');
+        const sUser = localStorage.getItem('user_login_name');
+        const sFull = localStorage.getItem('user_full_name');
+        
+        if (sPfp) document.querySelectorAll('.sync-pfp').forEach(img => img.src = sPfp);
+        if (sUser) {
+            document.getElementById('dash-username').innerText = sUser;
+            document.getElementById('settings-username').innerText = "@" + sUser;
+        }
+        if (sFull) {
+            document.getElementById('dash-fullname').innerText = sFull;
+            document.getElementById('settings-fullname').innerText = sFull;
+        }
+    }
+
+    function handleRegister() {
+        const full = document.getElementById('r-fullname').value;
+        const user = document.getElementById('r-user').value;
+        const pass = document.getElementById('r-pass').value;
+        const pin = document.getElementById('r-pin').value;
+        
+        localStorage.setItem('user_full_name', full);
+        localStorage.setItem('user_login_name', user);
+        localStorage.setItem('user_pass', pass);
+        localStorage.setItem('user_pin', pin);
+        
+        alert("Account Registered!");
+        navTo('login');
+    }
+
+    function handleLogin() {
+        const u = document.getElementById('l-user').value.trim();
+        const p = document.getElementById('l-pass').value;
+        const pin = document.getElementById('l-pin').value;
+
+        if(u === localStorage.getItem('user_login_name') && p === localStorage.getItem('user_pass') && pin === localStorage.getItem('user_pin')) {
+            initApp();
+            navTo('dash');
+        } else {
+            alert("Incorrect credentials");
+        }
+    }
+
+    function savePfp(input) {
+        if (input.files && input.files[0]) {
+            if (input.files[0].size > 2 * 1024 * 1024) {
+                alert("Image too large (>2MB)");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Img = e.target.result;
+                document.querySelectorAll('.sync-pfp').forEach(img => img.src = base64Img);
+                try {
+                    localStorage.setItem('user_pfp', base64Img);
+                } catch(err) {
+                    alert("Storage full!");
+                }
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function navTo(id) {
+        // Hide all screens
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
+        
+        // Show target screen
+        const target = document.getElementById(id);
+        if(target) target.classList.add('active-screen');
+
+        // Manage bottom nav visibility
+        const nav = document.getElementById('main-nav');
+        nav.style.display = (id === 'login' || id === 'register') ? 'none' : 'flex';
+
+        // Update active link colors (The Navigation Logic Fix)
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        if(id === 'dash') document.querySelectorAll('.nav-link')[0].classList.add('active');
+        if(id === 'transfer') document.querySelectorAll('.nav-link')[1].classList.add('active');
+        if(id === 'history') document.querySelectorAll('.nav-link')[2].classList.add('active');
+        if(id === 'settings') document.querySelectorAll('.nav-link')[3].classList.add('active');
+    }
+
+    function confirmTransfer() {
+        alert("Transfer Successful!");
+        navTo('dash');
+    }
+
+    function logout() {
+        navTo('login');
+    }
+</script>
+
+</body>
+</html>
